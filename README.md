@@ -2,8 +2,8 @@
 
 ## Dockerfile
 
-1. Como base para el contenedor partimos de la imagen `rockylinux` con el tag 8.
-2. Instalamos `httpd` y `php` mediante `yum`, el gestor de paquetes de CentOS y 
+1. Como base para el contenedor se parte de la imagen `rockylinux` con el tag 8.
+2. Se instala `httpd` y `php` mediante `yum`, el gestor de paquetes de CentOS y 
 derivados.
 
     Los comandos anidados con `&&` se encargan de borrar el cache generado por 
