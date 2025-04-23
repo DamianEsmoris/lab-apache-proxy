@@ -1,0 +1,7 @@
+services:
+    servidor-web:
+        build: .
+        container_name: lab-apache-proxy
+        ports:
+          - 8000:80
+          - 8001:8000
