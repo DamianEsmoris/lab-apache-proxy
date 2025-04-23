@@ -3,9 +3,8 @@
 ## Dockerfile
 
 1. Como base para el contenedor partimos de la imagen `rockylinux` con el tag 8.
-2. Añadimos el repositorio `EPEL` (el cual extiende la cantidad de paquetes 
-disponibles en distribuciones de tipo RHEL) e instalamos `httpd`, `php` 
-mediante `yum`, el gestor de paquetes de CentOS y derivados.
+2. Instalamos `httpd` y `php` mediante `yum`, el gestor de paquetes de CentOS y 
+derivados.
 
     Los comandos anidados con `&&` se encargan de borrar el cache generado por 
 `yum` después de haber instalado exitosamente los paquetes. Esto se hace para 

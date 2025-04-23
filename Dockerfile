@@ -1,7 +1,6 @@
 FROM rockylinux:8
 
-RUN yum install -y epel-release \
-    && yum install -y httpd php php-cli php-common \
+RUN yum install -y httpd php \
     && yum clean all \
     && rm -rf /var/cache/yum
 
