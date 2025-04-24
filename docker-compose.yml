@@ -1,7 +1,15 @@
 services:
-    servidor-web:
-        build: .
-        container_name: lab-apache-proxy
+  balanceador:
+        build: balanceador
+        container_name: lab-balanceador
         ports:
           - 8000:80
-          - 8001:8000
+  sitio-a:
+        build: sitio
+        container_name: lab-balanceador-sitio-a
+  sitio-b:
+        build: sitio
+        container_name: lab-balanceador-sitio-b
+  sitio-c:
+        build: sitio
+        container_name: lab-balanceador-sitio-c
