@@ -1,10 +1,11 @@
 # Docker
 
-## Dockerfile
+1. Para ambos contenedores se parte de la imagen `rockylinux` con el tag 8.
 
-1. Como base para el contenedor se parte de la imagen `rockylinux` con el tag 8.
-2. Se instala `httpd` y `php` mediante `yum`, el gestor de paquetes de CentOS y 
-derivados.
+2. Para el contenedor del sitio se instala `httpd` y `php` mediante `yum`, el 
+gestor de paquetes de CentOS y derivados.
+
+    Para el contenedor del proxy únicamente se le instala `httpd`.
 
     Los comandos anidados con `&&` se encargan de borrar el cache generado por 
 `yum` después de haber instalado exitosamente los paquetes. Esto se hace para 
@@ -13,40 +14,51 @@ alivianar la imagen resultante.
     *Se debe realizar mediante comandos anidados por el funcionamiento de las 
 capas de Docker.*
 
-3. `COPY` como el nombre indica copia ficheros/directorios, en este caso se 
-copian todos los `.conf` de `./apache-conf.d/` y el `index.php` a 
-`/var/www/html/`.
-4. Adicionalmente se copia el script `start.sh` con permisos 600 (únicamente 
-lectura y ejecución por el dueño) el cual contiene los comandos para iniciar 
-`php` y `httpd`.
-5. La instrucción `CMD` especifica el comando que se ejecutará cuando se inicie 
-el contenedor. En este caso, ejecuta el script `start.sh`.
+3. `COPY` como su nombre indica copia ficheros/directorios:
+
+- A los contenedores del sitio se le copia el `index.php` en `/var/www/html` y 
+`start.sh` con los permisos 600 (únicamente lectura y ejecución por el dueño). 
+Este script contiene los comandos para iniciar `php` y `httpd`.
+
+- Al contenedor del proxy se le copia la configuración de apache: 
+`balanceador/apache.conf` que se encarga de configurar el servidor web como 
+proxy.
+
+4. La instrucción `CMD` especifica el comando que se ejecutará cuando se inicie 
+el contenedor. En el caso de los que hostean el sitio se ejecuta el script 
+`start.sh` y en el contenedor que hace como proxy se ejecuta `httpd 
+-DFOREGROUND`
 
 ## docker-compose.yml
 
-Se define un servicio llamado 'servidor-web' el cual se construye a partir del 
-`Dockerfile` del directorio actual, esto debido a `build: .`.
+Se definen tres servicios servicio llamados 'sitio-a', 'sitio-b', 'sitio-c' los 
+cuales se construye a partir del Dockerfile en `sitio/`
+- Se le asigna un nombre al los contenedores resultantes con la instrucción: 
+`container_name: lab-balanceador-[a-b]`.
 
-- Se le asigna un nombre al contenedor resultante con la instrucción: 
-`container_name: lab-apache-proxy`.
+También se define el servicio 'balanceador' con el Dockerfile ubicado en 
+`balanceador/` y se nombra al contenedor resultante como: 'lab-balanceador'
 - `ports` asocia los puertos del contenedor al host. En este caso:
-    - `8000:80`: El puerto 80 del contenedor (proxy) es accesible como puerto 
-8000 en el host.
-    - `8001:8000`: El puerto 8000 del contenedor (web) es accesible como puerto 
-8001 en el host.
+    - `8000:80`: El puerto 80 del contenedor (balanceador) es accesible como 
+puerto 8000 en el host.
 
 # Apache
 
-## sitio.conf
+*Los sitios usan la configuración por defecto de Apache.*
 
-En este fichero se especifica una configuración básica para que Apache escuche 
-peticiones en el puerto 8000 y se define un `VirtualHost` que muestre el 
-contenido de `/var/www/html`.
+## balanceador.conf
 
-## proxy.conf
+Se define un `VirtualHost` en el puerto 80 que especifica un balanceador 
+llamado 'elcluster' el cual contiene una lista de miembros (las urls son los 
+nombres de los servicios especificados en el `docker-compose.yml`) y el método 
+de ditstribución de carga:
 
-Se define otro `VirtualHost` en el puerto 80 que hace de proxy reverso al sitio 
-del puerto 8000.
+- *`byrequests`:* distribuye las peticiones según el número de solicitudes que 
+ha recibido cada miembro del balancer.
+- *`bytraffic:* distribuye las peticiones según la cantidad de tráfico (bytes) 
+que ha manejado cada miembro.
+- *`bybusyness:* distribuye las peticiones dando prioridad a los workers con 
+menos peticiones pendientes.
 
 ---
 
@@ -56,12 +68,9 @@ del puerto 8000.
 docker compose up --build -d
 ```
 
-La url para acceder desde el proxy es [127.0.0.1:8000](http://127.0.0.1:8000) y 
-el del sitio es [127.0.0.1:8001](http://127.0.0.1:8001) *en teoría al acceder a 
-cada url te va a saludar con IPs distintas. La local es la del proxy, ya que el 
-sitio está en el mismo servidor*.
+La url para acceder al sitio es: [127.0.0.1:8000](http://127.0.0.1:8000).
 
-En caso de querer entrar al contenedor para revisar algo basta con el comando: 
-`docker exec -it lab-apache-proxy bash`. Esta imagen viene bastante pelada y no 
-trae `nano`. En caso de preferirlo antes que `vi` con tirar `yum install nano 
--y` ya estaría pronto.
+En caso de querer entrar a alguno de los contenedores para revisar algo basta 
+con el comando: `docker exec -it <nombre-del-contedor> bash`. Las imágenes 
+vienen bastante peladas y no traen `nano`. En caso de preferirlo antes que `vi` 
+con tirar `yum install nano -y` ya estaría pronto.
